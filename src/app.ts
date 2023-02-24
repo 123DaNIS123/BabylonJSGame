@@ -5,6 +5,7 @@ import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBu
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
+import { PlayerInput } from "./inputController";
 
 enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
@@ -24,6 +25,7 @@ class App {
     private _state: number = 0;
     private _gamescene: Scene;
     private _cutScene: Scene;
+    private _input: PlayerInput;
 
     constructor() {
         this._canvas = this._createCanvas();
@@ -212,7 +214,7 @@ class App {
 
             var box = MeshBuilder.CreateBox("Small1", { width: 0.5, depth: 0.5, height: 0.25, faceColors: [new Color4(0,0,0,1), new Color4(0,0,0,1), new Color4(0,0,0,1), new Color4(0,0,0,1),new Color4(0,0,0,1), new Color4(0,0,0,1)] }, scene);
             box.position.y = 1.5;
-            box.position.z = 1;
+            box.position.z = -1;
 
             var body = Mesh.CreateCylinder("body", 3, 2,2,0,0,scene);
             var bodymtl = new StandardMaterial("red",scene);
@@ -248,7 +250,8 @@ class App {
         shadowGenerator.darkness = 0.4;
     
         //Create the player
-        this._player = new Player(this.assets, scene, shadowGenerator); //dont have inputs yet so we dont need to pass it in
+        this._player = new Player(this.assets, scene, shadowGenerator, this._input);
+        const camera = this._player.activatePlayerCamera();
     }
 
     private async _goToGame(){
@@ -256,7 +259,8 @@ class App {
         this._scene.detachControl();
         let scene = this._gamescene;
         scene.clearColor = new Color4(0.01568627450980392, 0.01568627450980392, 0.20392156862745098); // a color that fit the overall color scheme better
-
+        //--INPUT--
+        this._input = new PlayerInput(scene, this._canvas); //detect keyboard/mobile inputs
         //--GUI--
         const playerUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
         //dont detect any inputs from this ui while the game is loading
