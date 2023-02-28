@@ -22,8 +22,8 @@ export class Player extends TransformNode {
 
     //const values
     private static readonly PLAYER_SPEED: number = 0.45;
-    private static readonly JUMP_FORCE: number = 0.80;
-    private static readonly GRAVITY: number = -2.8;
+    private static readonly JUMP_FORCE: number = 0.4;
+    private static readonly GRAVITY: number = -2.5;
     // private static readonly DASH_FACTOR: number = 2.5;
     // private static readonly DASH_TIME: number = 10; //how many frames the dash lasts
     private static readonly DOWN_TILT: Vector3 = new Vector3(0.8290313946973066, 0, 0);
@@ -92,9 +92,9 @@ export class Player extends TransformNode {
 
     private _setupPlayerCamera() {
         //our actual camera that's pointing at our root's position
-        this.camera = new UniversalCamera("cam", new Vector3(0, 1.5, 0).addInPlace(this.mesh.position), this.scene);
+        this.camera = new UniversalCamera("cam", new Vector3(0, 2, 0).addInPlace(this.mesh.position), this.scene);
         this.camera.rotation = new Vector3(0, Math.PI, 0);
-        this.camera.fov = 0.47350045992678597;
+        this.camera.fov = 0.43;
         this.camera.parent = this.mesh;
 
         this.scene.activeCamera = this.camera;
@@ -109,8 +109,8 @@ export class Player extends TransformNode {
         this._v = this._input.vertical; //fwd, z
 
         //--MOVEMENTS BASED ON CAMERA (as it rotates)--
-        let fwd = this.forward;
-        let right = this.right;
+        let fwd = this.mesh.forward;
+        let right = this.mesh.right;
         let correctedVertical = fwd.scaleInPlace(this._v);
         let correctedHorizontal = right.scaleInPlace(this._h);
 
@@ -140,38 +140,18 @@ export class Player extends TransformNode {
 
         //rotation based on mousemove
         //check if there is movement to determine if rotation is needed
-        let mouseMovement = this._input.mouseCurrentPosition.subtract(this._input.mouseLastPosition);
-        if (mouseMovement.length() == 0) {//if there's no input detected, prevent rotation and keep player in same rotation
+        if (this._input.mouseCurrentPosition.length() == 0) {//if there's no input detected, prevent rotation and keep player in same rotation
             return;
         }
         // currentToLast.addInPlace(this.mesh.rotation);
-        this.mesh.rotation.addInPlace(this._input.mouseCurrentPosition);
-        this.mesh.rotationQuaternion = Quaternion.FromEulerVector(this.mesh.rotation);
-        console.log(this.mesh.rotation);
-        console.log(this.mesh.rotationQuaternion);
-        // let angle = Math.atan2(currentToLast._x, currentToLast._y);
-        // angle += this._camRoot.rotation.y;
-        // let targ = Quaternion.FromEulerAngles(0, angle, 0);
-        // let currentToLast = this._input.mouseCurrentPosition.subtract(this._input.mouseLastPosition);
-        //     let segment = currentToLast.length();
-        //     //check if there is movement to determine if rotation is needed
-        //     if (segment == 0) {//if there's no input detected, prevent rotation and keep player in same rotation
-        //         return;
-        //     }
-        //     let ballDown = new Vector3(0, -1, 0);
-        //     let axis = ballDown.cross(currentToLast);
-        //     if (axis === Vector3.Zero()) {
-        //         return
-        //     }
-        //     let theta = segment / 0.5;
-        //     let thetaDegrees = theta * 180 / Math.PI;
-
-        //     var q = Quaternion.RotationAxis(axis, thetaDegrees);
-            
-        //     var rotToQuaternion = this.mesh.rotation.toQuaternion();
-        //     var rotation = q.multiply(rotToQuaternion).toEulerAngles();
-        //     console.log("earthRotation: "+ rotation);
-        //     this.mesh.rotation = new Vector3(rotation.x, rotation.y, rotation.z);
+        this.mesh.rotate(new Vector3(1, 0, 0), this._input.mouseCurrentPosition._x / Math.PI, Space.LOCAL);
+        this.mesh.rotate(new Vector3(0, 1, 0), this._input.mouseCurrentPosition._y / Math.PI, Space.LOCAL);
+        let rotationInEuler = this.mesh.rotationQuaternion.toEulerAngles();
+        if (rotationInEuler._x > 1) rotationInEuler._x = 1;
+        else if (rotationInEuler._x < -1) rotationInEuler._x = -1;
+        this.mesh.rotationQuaternion = Quaternion.FromEulerVector(new Vector3(rotationInEuler._x, rotationInEuler._y, 0))
+        console.log(this.mesh.rotationQuaternion.toEulerAngles());
+        this._input.mouseCurrentPosition = new Vector3(0, 0, 0);
     }
 
     //--GROUND DETECTION--

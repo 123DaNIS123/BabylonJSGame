@@ -13,8 +13,8 @@ export class PlayerInput{
     public horizontalAxis: number = 0;
     //mouse
     public mouseCurrentPosition = new Vector3(0, 0, 0);
-    public mouseLastPosition = new Vector3(0, 0, 0);
-    public isLocked = false;
+    public mouseSensitivity = 0.01 // default
+    // public mouseLastPosition = new Vector3(0, 0, 0);
 
     //jumping
     public jumpKeyDown: boolean = false;
@@ -22,8 +22,6 @@ export class PlayerInput{
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
         scene.actionManager = new ActionManager(scene);
-        const mouseEvent = {
-        } as IMouseEvent;
     
         this.inputMap = {};
         scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
@@ -32,28 +30,31 @@ export class PlayerInput{
         scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
             this.inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
         }));
-        scene.onPointerDown = function (evt) {
-            if (!this.isLocked) {
-                canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-                if (canvas.requestPointerLock){
-                    canvas.requestPointerLock();
-                }
+        canvas.addEventListener("click", event => {
+            canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+            if(canvas.requestPointerLock) {
+              canvas.requestPointerLock();
             }
-        }
-        let pointerlockchange = function () {
-            var controlEnabled = document.pointerLockElement || false;
+          }, false);
+        canvas.addEventListener("mousemove", (evt) => {
+            this.mouseCurrentPosition = new Vector3(-evt.movementY*this.mouseSensitivity, evt.movementX*this.mouseSensitivity);
+        })
+        // let pointerlockchange = function () {
+        //     var controlEnabled = document.pointerLockElement || false;
             
-            if (!controlEnabled) {
-                this.isLocked = false;
-            } else {
-                this.isLocked = true;
-            }
-        };
-        scene.onPointerObservable.add((evt) => {
-            console.log(evt.event, "!!!!!")
-            this.mouseLastPosition = this.mouseCurrentPosition;
-            this.mouseCurrentPosition = new Vector3(evt.event.movementY/512, evt.event.movementX/512);
-        });
+        //     if (!controlEnabled) {
+        //         this.isLocked = false;
+        //     } else {
+        //         this.isLocked = true;
+        //     }
+        // };
+        // scene.onPointerObservable.add((evt) => {
+        //     if (this.isLocked){
+        //         console.log(evt.event, "!!!!!")
+        //         this.mouseLastPosition = this.mouseCurrentPosition;
+        //         this.mouseCurrentPosition = new Vector3(evt.event.movementY/512, evt.event.movementX/512);
+        //     }
+        // });
     
         scene.onBeforeRenderObservable.add(() => {
             this._updateFromKeyboard();
@@ -61,29 +62,23 @@ export class PlayerInput{
     }
 
     private _updateFromKeyboard(): void {
-        if (this.inputMap["ArrowUp"]) {
+        if (this.inputMap["s"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
-            this.verticalAxis = 1;
     
-        } else if (this.inputMap["ArrowDown"]) {
+        } else if (this.inputMap["w"]) {
             this.vertical = Scalar.Lerp(this.vertical, -1, 0.2);
-            this.verticalAxis = -1;
         } else {
             this.vertical = 0;
-            this.verticalAxis = 0;
         }
     
-        if (this.inputMap["ArrowLeft"]) {
+        if (this.inputMap["d"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, -1, 0.2);
-            this.horizontalAxis = -1;
     
-        } else if (this.inputMap["ArrowRight"]) {
+        } else if (this.inputMap["a"]) {
             this.horizontal = Scalar.Lerp(this.horizontal, 1, 0.2);
-            this.horizontalAxis = 1;
         }
         else {
             this.horizontal = 0;
-            this.horizontalAxis = 0;
         }
         
         //Jump Checks (SPACE)
